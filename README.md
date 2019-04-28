@@ -13,7 +13,23 @@ Quick glossary of terms:
 - Crosser : Any position which intersects with another position.
 
 Strategy:
-1. Fill in the position with the most crossers, practically this is the longest position that has
-   a themed word of the same length.
-2. ???
-3. Profit
+1. First find the top N grids which are suitable for the chosen theme words. The current naive
+   method uses a simple count of positions lengths matching word lengths, with no repetition
+   allowed.
+2. Fill in the longest themed word first. If there are multiple longest themed words fill in
+   the least constrained first. Again this uses a naive approach. For each of the possible
+   longest themed words count the number of suitable crossers from the large dictionary. Highest
+   count is entered into the position.
+3. Sort the crossers of this word
+
+
+Strategy:
+The strategy breaks into three modes: Fresh positions for themed words, finding theme words
+which intersect with any already placed theme word and filling the rest the spaces with any
+old word. We will need to switch between these modes as the grid is filled out, with back tracking
+between them.
+
+1. Fill in the longest themed word first. If there are multiple longest themed words fill in
+   the least constrained first. This uses a naive approach, for each of the possible
+   longest themed words count the number of suitable crossers from the large dictionary. Highest
+   count is entered into the position.
