@@ -1,6 +1,4 @@
 import numpy as np
-from math import sqrt
-from collections import defaultdict, namedtuple
 
 class Grid():
     def __init__(self, raw):
@@ -47,16 +45,20 @@ class Grid():
             for down in [p for p in self.positions if p.direction == 'd']:
                 if across.j <= down.j < across.j + across.length and\
                    down.i <= across.i < down.i + down.length:
-                    across.crossers[down.j] = down
-                    down.crossers[across.i] = across
+                    across.crossers.append(down)
+                    down.crossers.append(across)
 
     def enter_word(self, word, position):
         assert len(word) == position.length, 'Word does not fit'
-        word = np.array([char for char in word])
-        if position.direction == 'a':
-            self.grid[position.i, position.j:position.j+position.length] = word
-        else:
-            self.grid[position.i:position.i+position.length, position.j] = word
+        word = np.array(list(word))
+        self.grid[position.slice] = word
+        position.filled = True
+
+    def remove_word(self, regex, position):
+        assert len(regex.pattern) == position.length, 'Removal too long'
+        blanks = np.array([c if c.isalpha() else ' ' for c in regex.pattern])
+        self.grid[position.slice] = blanks
+        position.filled = False
         
 class Position():
     def __init__(self, i, j, length, direction):
@@ -64,13 +66,17 @@ class Position():
         self.j = j
         self.length = length
         self.direction = direction
-        self.crossers = {}
+        self.get_slice() #  Store positions as a numpy slice for easy access
+        self.crossers = []
+        self.freedom = 0
+        self.filled = False
+
+    def get_slice(self):
+        if self.direction == 'a':
+            self.slice = np.s_[self.i, self.j:self.j+self.length]
+        else:
+            self.slice = np.s_[self.i:self.i+self.length, self.j]
 
     def __repr__(self):
         return str((self.i, self.j, self.length, self.direction))
 
-test = '     '\
-       ' # # '\
-       '     '\
-       ' # # '\
-       '     '
