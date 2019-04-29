@@ -67,16 +67,15 @@ def check_arc_consistency(grid, position, word, dic):
         return sum(scores)
     return 0 #  If any crosser has no possible words we need to backtrack
 
+
 def get_freedom(grid, position, dic):
     '''
     Find how many possible words fit in a single unfilled position
     '''
     pattern = get_pattern(grid, position)
-    score = 0
-    for word in dic[position.length]:
-        if re.match(pattern, word):
-            score += 1
-    return score
+    return sum([1 for word in dic[position.length]
+                if re.match(pattern, word)])
+
 
 def get_best_word(grid, position, theme_words):
     if position.length not in theme_words.keys():
@@ -84,12 +83,10 @@ def get_best_word(grid, position, theme_words):
     pattern = get_pattern(grid.grid, position)
     possibles = [word for word in theme_words[position.length]
                  if re.match(pattern, word)]
-    if not possibles:
-        return
-    return sorted(possibles,
-                   key = lambda x: check_arc_consistency(grid.grid, position,
-                                                         x, dic),
-                  reverse = True)
+    scores = [check_arc_consistency(grid.grid, position, word, dic)
+              for word in possibles]
+    combined = sorted(zip(scores, possibles), reverse=True)
+    return [poss for score, poss in combined if score]
 
 def grid_score(grid):
     return sum([1 for pos in grid.positions if pos.filled])
@@ -144,12 +141,20 @@ def full_recursive(grid, positions, dic, depth = 0):
         else:
             return
     return
+
+
         
 def heur_recursive(grid, positions, dic, depth = 0):
     depth += 1
     print(' '*depth, depth)
+    
+    if not positions:
+        return grid
+    # Sort by most constrained
+    positions.sort(key = lambda x: get_freedom(grid.grid, x, dic))
 
     for pos in positions:
+        pattern = get_pattern(grid.grid, pos)
         possibles = get_best_word(grid, pos, dic)
         for poss in possibles:
             grid.enter_word(poss, pos)
@@ -157,9 +162,7 @@ def heur_recursive(grid, positions, dic, depth = 0):
             if new_grid:
                 return new_grid
             grid.remove_word(pattern, pos)
-        else:
-            return
-    return    
+    return
 
 
 best_grids =  suitable_grid_finder(grids, theme_words)
@@ -171,6 +174,7 @@ for _, grid in best_grids[:10]:
     print("Score is: ", grid_score(grid))
     print("\n\n\n\n")
     x.append(grid)
+
 
 
 

@@ -8,6 +8,7 @@ class Grid():
         assert np.isclose(np.sqrt(len(raw)), self.size) #  Check grid is square
         self.grid = np.array([i for i in raw]).reshape((self.size, -1))
         self.positions = self.get_positions()
+        self.number_positions()
         self.get_crossers()
 
     def get_positions(self):
@@ -34,7 +35,22 @@ class Grid():
             if down:
                 for index, length in down:
                     positions.append(Position(index, i, length, 'd'))
-        return positions
+        return sorted(positions, key = lambda pos: (pos.i, pos.j))
+
+    def number_positions(self):
+        '''
+        Store the clue numbers for each position, following standard
+        crossword numbering rules.
+        '''
+        number = 1
+        done = []
+        for pos in self.positions:
+            if (pos.i, pos.j) in done:
+                pos.number = number
+            else:
+                done.append((pos.i, pos.j))
+                pos.number = number
+                number += 1
 
     def get_crossers(self):
         '''
@@ -59,6 +75,26 @@ class Grid():
         blanks = np.array([c if c.isalpha() else ' ' for c in regex.pattern])
         self.grid[position.slice] = blanks
         position.filled = False
+
+    def latex_print(self):
+        print("\\begin{Puzzle}{15}{15}")
+        number = 1
+        for i in range(self.size):
+            line = ''
+            for j in range(self.size):
+                line += '|'
+                if self.grid[i][j] == self.divider:
+                    line += '*'
+                else:
+                    if (i,j) in [(p.i, p.j) for p in self.positions]:
+                        line += '['+str(number)+']'
+                        number += 1
+                    if self.grid[i][j] == ' ':
+                        line += '{}'
+                    else:
+                        line += self.grid[i][j]
+            print(line + '|.')
+        print("\\end{Puzzle}")
         
 class Position():
     def __init__(self, i, j, length, direction):
@@ -68,8 +104,8 @@ class Position():
         self.direction = direction
         self.get_slice() #  Store positions as a numpy slice for easy access
         self.crossers = []
-        self.freedom = 0
         self.filled = False
+        self.number = None #  Clue number for printing the grid
 
     def get_slice(self):
         if self.direction == 'a':
