@@ -1,6 +1,6 @@
 import numpy as np
 
-class Grid():
+class Puzzle():
     def __init__(self, raw):
         self.raw = raw
         self.size = int(np.sqrt(len(raw)))
@@ -8,6 +8,7 @@ class Grid():
         assert np.isclose(np.sqrt(len(raw)), self.size) #  Check grid is square
         self.grid = np.array([i for i in raw]).reshape((self.size, -1))
         self.positions = self.get_positions()
+        self.unfilled = self.positions
         self.number_positions()
         self.get_crossers()
 
@@ -69,12 +70,16 @@ class Grid():
         word = np.array(list(word))
         self.grid[position.slice] = word
         position.filled = True
+        if position in self.unfilled: #  In case we are overwriting a word
+            self.unfilled.remove(position)
 
     def remove_word(self, regex, position):
         assert len(regex.pattern) == position.length, 'Removal too long'
         blanks = np.array([c if c.isalpha() else ' ' for c in regex.pattern])
         self.grid[position.slice] = blanks
         position.filled = False
+        if position not in self.unfilled: #  If accidentally removed twice
+            self.unfilled.append(position) #  Don't want multiple entries
 
     def latex_print(self):
         print("\\begin{Puzzle}{15}{15}")
