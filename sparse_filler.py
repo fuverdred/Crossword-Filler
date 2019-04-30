@@ -1,7 +1,7 @@
 from collections import defaultdict
 import re
 from copy import deepcopy
-from random import choice
+from random import choice, shuffle
 
 import numpy as np
 
@@ -166,6 +166,8 @@ def heur_recursive(grid, positions, dic, depth = 0):
 
 
 best_grids =  suitable_grid_finder(grids, theme_words)
+for key in theme_words.keys():
+    shuffle(theme_words[key])
 
 x = []
 for _, grid in best_grids[:10]:
