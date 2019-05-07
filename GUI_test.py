@@ -46,11 +46,8 @@ class Grid_cell(tk.Frame):
 
         for pos in self.positions: #  Update the colours on the grid
             pos.update()
-            if pos.filled:
-                colour = 'white'
-            else:
-                colour = self.colour(pos.freedom)
-                
+            colour = self.colour(pos)
+
             for cell in pos.cells:
                 cell.entry_widget.config(bg = colour)
             
@@ -58,11 +55,16 @@ class Grid_cell(tk.Frame):
     def enter_letter(self, letter):
         self.entry_widget.insert(0, letter)
 
-    def colour(self, freedom):
+    def colour(self, pos):
         '''Sets the colour of the squares depending on their freedom'''
         def rgb(r, g, b): #  convert to type which tkinter can handle
             return "#%s%s%s" % tuple([hex(c)[2:].rjust(2, '0')
                                       for c in (r, g, b)])
+        if pos.filled:
+            return 'white'
+        elif pos.freedom == 0:
+            return 'gray'
+        freedom = pos.freedom
         if freedom > 255: #  more than 255 possibles leave fully green
             freedom = 255
         g = freedom*2 if freedom < 128 else 255
