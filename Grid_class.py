@@ -136,8 +136,6 @@ class Puzzle():
         This method has a LOT of scope for optimisation, current version
         is about as poorly optimised as it gets
         '''
-        if position.freedom > 1000: #  arbitrary big number
-            print("This will take a while...")
         scores = [self.get_propagation_score(position, word)
                   for word in position.possibles]
         return scores #  These will be in the same order as pos.possibles
@@ -232,7 +230,63 @@ class Puzzle():
 
         recursive(theme_positions, theme_dic, remaining_pos)
         return best_grid
+
+    def heuristic_theme_filler(self, theme_dic):
+        '''
+        Fit theme words by ranking them in order of how much freedom they give
+        the grid, followed by any theme words which intersect.
+        '''
+        def get_best_word(position):
+            possibles = self.get_possible_words(position,
+                                            pattern=self.get_pattern(position),
+                                            dic=theme_dic)
+            if not possibles:
+                return
+            position.possibles = possibles
+            scores = self.rank_possible_words(position)
+            if not any(scores):
+                return
+            position.possibles, _ = zip(*sorted(zip(possibles, scores),
+                                                key=lambda x: x[1],
+                                                reverse=True))
+            return position.possibles[0]
             
+            
+        def weak_recursive(position, depth=0):
+            '''Weak because there is minimal backtracking'''
+            depth += 1
+            print(' '*depth, depth)
+
+            for pos in position.crossers:
+                # Best word leaves the most freedom in the grid
+                best_word = get_best_word(pos)
+                if best_word is None:
+                    continue
+                self.enter_word(pos, best_word)
+                theme_dic[pos.length].remove(best_word)
+                weak_recursive(pos, depth)
+
+        # Only deal with relevant words and positions   
+        theme_positions = [pos for pos in self.positions
+                           if pos.length in theme_dic.keys()]
+        theme_positions.sort(key=lambda x: x.length, reverse=True) # longest 1st
+        
+        remove = []
+        for word_length in theme_dic.keys():
+            if word_length not in {p.length for p in theme_positions}:
+                remove.append(word_length)
+        for index in remove:
+            theme_dic.pop(index)#  remove words for which no pos exists
+
+        for pos in theme_positions:
+            if pos.filled:
+                continue
+            best_word = get_best_word(pos)
+            if best_word is None:
+                continue
+            self.enter_word(pos, best_word)
+            theme_dic[pos.length].remove(best_word)
+            weak_recursive(pos)
         
 
     def latex_print(self):
@@ -312,5 +366,4 @@ with open('raw_grids.txt', 'r') as f:
     raw_grids = [grid[:-1] for grid in f.readlines()]
 
 test = Puzzle(raw_grids[2], dic)
-best_grid = test.fit_theme(deepcopy(theme_dic))
-grid_print(best_grid)
+test.heuristic_theme_filler(theme_dic)
