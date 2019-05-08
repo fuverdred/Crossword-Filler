@@ -1,7 +1,9 @@
-import numpy as np
+from collections import defaultdict
+from copy import deepcopy
 import re
+from random import shuffle
 
-from random import choice, sample
+import numpy as np
 
 class Puzzle():
     def __init__(self, raw, full_dic):
@@ -147,21 +149,91 @@ class Puzzle():
         possible words by highest propagation score, while keeping the
         score for reference.
         '''
-        print("Updating Position")
         position.pattern = self.get_pattern(position)
         if all([c.isalpha() for c in position.pattern.pattern]):
             position.filled = True
             return
-        print("Getting possibles")
         position.possibles = self.get_possible_words(position)
-        print("Got possibles, ", len(position.possibles), " of them")
-
-        print("Getting scores")
         position.scores = self.rank_possible_words(position)
         temp_zip = sorted(zip(position.scores, position.possibles),
-                          key = lambda x: x[0], reverse = True)
+                          key=lambda x: x[0], reverse=True)
         position.scores, position.possibles = zip(*temp_zip)
         position.freedom = len(self.possibles)
+
+    def grid_print(self):
+        for row in self.grid:
+            print(''.join(row))
+
+    def fit_theme(self, theme_dic, check_arc_consistency=False):
+        def recursive(theme_positions, theme_dic, remaining_pos, depth=0):
+            nonlocal best_count
+            nonlocal best_grid
+            nonlocal check_arc_consistency
+
+            #Check for end of recursion
+            if not theme_positions:
+                return
+            if not any([theme_dic[i] and remaining_pos[i]
+                        for i in theme_dic.keys()]):
+                return
+            
+            depth += 1
+            print(' '*depth, depth) #  track recursion
+
+            if depth > best_count:
+                best_count = depth
+                best_grid = deepcopy(self)
+
+            current_pos = theme_positions[0] #  next position to try
+            current_pattern = current_pos.pattern #  need for removing word
+            possibles = self.get_possible_words(current_pos,
+                                                pattern = self.get_pattern(current_pos),
+                                                dic=theme_dic)
+            if check_arc_consistency:
+                possibles = [word for word in possibles if
+                             self.get_propagation_score(current_pos, word)]
+
+            if not possibles: # depth-1 because a word has not been entered
+                recursive(theme_positions[1:], theme_dic,
+                          remaining_pos, depth-1)
+            else:
+                for word in possibles:
+                    self.enter_word(current_pos, word)
+                    theme_dic[current_pos.length].remove(word)
+                    remaining_pos[current_pos.length] -= 1
+                    for pos in current_pos.crossers:
+                        if pos in theme_positions: #  Move the crossers to the front
+                            theme_positions.insert(1, theme_positions.pop(
+                                                    theme_positions.index(pos)))
+                    recursive(theme_positions[1:], theme_dic, remaining_pos, depth)
+                    self.remove_word(current_pos, current_pattern)
+                    theme_dic[current_pos.length].append(word)
+                    remaining_pos[current_pos.length] += 1
+            
+        # Only deal with relevant words and positions   
+        theme_positions = [pos for pos in self.positions
+                           if pos.length in theme_dic.keys()]
+        remove = []
+        for word_length in theme_dic.keys():
+            if word_length not in {p.length for p in theme_positions}:
+                remove.append(word_length)
+        for index in remove:
+            theme_dic.pop(index)
+
+        remaining_pos = defaultdict(int)
+        for pos in theme_positions:
+            remaining_pos[pos.length] += 1 #  Tracking open positions left
+        
+            
+        shuffle(theme_positions)
+
+        best_grid = None
+        best_count = 0
+
+        recursive(theme_positions, theme_dic, remaining_pos)
+        return best_grid
+            
+        
 
     def latex_print(self):
         '''In LaTeX mark up for printing'''
@@ -200,6 +272,8 @@ class Position():
         self.number = None #  Clue number for printing the grid
         self.get_cell_coords()
         self.cells = [] #  For storing the cells in the GUI
+        self.pattern = re.compile('.'*self.length)
+        self.freedom = len(self.puzzle.full_dic[self.length])
 
     def get_slice(self):
         '''The slice of numpy array which forms this position'''
@@ -217,3 +291,26 @@ class Position():
     def __repr__(self):
         return str((self.i, self.j, self.length, self.direction))
 
+
+def grid_print(puzzle):
+    for row in puzzle.grid:
+        print(''.join(row))
+
+
+dic = defaultdict(list)
+theme_dic = defaultdict(list)
+
+with open('clean_dictionary.txt', 'r') as f:
+    for word in f.readlines():
+        dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
+
+with open('themes/chocolate_bars.txt', 'r') as f:
+    for word in list(f.readlines()):
+        theme_dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
+
+with open('raw_grids.txt', 'r') as f:
+    raw_grids = [grid[:-1] for grid in f.readlines()]
+
+test = Puzzle(raw_grids[2], dic)
+best_grid = test.fit_theme(deepcopy(theme_dic))
+grid_print(best_grid)
