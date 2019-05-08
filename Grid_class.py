@@ -152,11 +152,11 @@ class Puzzle():
             position.filled = True
             return
         position.possibles = self.get_possible_words(position)
-        position.scores = self.rank_possible_words(position)
-        temp_zip = sorted(zip(position.scores, position.possibles),
-                          key=lambda x: x[0], reverse=True)
-        position.scores, position.possibles = zip(*temp_zip)
-        position.freedom = len(self.possibles)
+##        position.scores = self.rank_possible_words(position)
+##        temp_zip = sorted(zip(position.scores, position.possibles),
+##                          key=lambda x: x[0], reverse=True)
+##        position.scores, position.possibles = zip(*temp_zip)
+        position.freedom = len(position.possibles)
 
     def grid_print(self):
         for row in self.grid:
@@ -350,20 +350,20 @@ def grid_print(puzzle):
     for row in puzzle.grid:
         print(''.join(row))
 
+if __name__ == '__main__':
+    dic = defaultdict(list)
+    theme_dic = defaultdict(list)
 
-dic = defaultdict(list)
-theme_dic = defaultdict(list)
+    with open('clean_dictionary.txt', 'r') as f:
+        for word in f.readlines():
+            dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
-with open('clean_dictionary.txt', 'r') as f:
-    for word in f.readlines():
-        dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
+    with open('themes/chocolate_bars.txt', 'r') as f:
+        for word in list(f.readlines()):
+            theme_dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
-with open('themes/chocolate_bars.txt', 'r') as f:
-    for word in list(f.readlines()):
-        theme_dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
+    with open('raw_grids.txt', 'r') as f:
+        raw_grids = [grid[:-1] for grid in f.readlines()]
 
-with open('raw_grids.txt', 'r') as f:
-    raw_grids = [grid[:-1] for grid in f.readlines()]
-
-test = Puzzle(raw_grids[2], dic)
-test.heuristic_theme_filler(theme_dic)
+    test = Puzzle(raw_grids[2], dic)
+    test.heuristic_theme_filler(theme_dic)

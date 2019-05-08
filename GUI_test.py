@@ -45,7 +45,7 @@ class Grid_cell(tk.Frame):
         self.puzzle.grid[self.i][self.j] = self.text.get() #  update back end
 
         for pos in self.positions: #  Update the colours on the grid
-            pos.update()
+            self.puzzle.update_position(pos)
             colour = self.colour(pos)
 
             for cell in pos.cells:
@@ -108,7 +108,7 @@ class Grid(tk.Frame):
 
 #### LOAD GRIDS AND WORDS #################################################
 dic = defaultdict(list)
-theme_words = defaultdict(list)
+theme_dic = defaultdict(list)
 
 with open('clean_dictionary.txt', 'r') as f:
     for word in f.readlines():
@@ -116,7 +116,7 @@ with open('clean_dictionary.txt', 'r') as f:
 
 with open('themes/chocolate_bars.txt', 'r') as f:
     for word in f.readlines():
-        theme_words[len(word[:-1])].append(word[:-1]) #  remove trailing \n
+        theme_dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
 with open('raw_grids.txt', 'r') as f:
     raw_grids = [grid[:-1] for grid in f.readlines()]
@@ -129,7 +129,13 @@ Window.geometry("700x700+50+50") # heightxwidth+x+y
 mainPanel = tk.Canvas(Window, width = 200, height = 200) # main screen
 mainPanel.pack()
 
-puzzle = Puzzle(raw_grids[34], dic) #  This is the back end
+puzzle = Puzzle(raw_grids[13], dic) #  This is the back end
 grid = Grid(mainPanel, puzzle)
 
+puzzle.heuristic_theme_filler(theme_dic)
 
+filled = [p for p in puzzle.positions if p.filled]
+for pos in filled:
+    print(''.join(puzzle.grid[pos.slice]))
+    for cell in pos.cells:
+        cell.entry_widget.insert(0, puzzle.grid[cell.i][cell.j])
