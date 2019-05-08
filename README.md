@@ -33,3 +33,12 @@ between them.
    the least constrained first. This uses a naive approach, for each of the possible
    longest themed words count the number of suitable crossers from the large dictionary. Highest
    count is entered into the position.
+   
+Almost full recursive theme fitter:
+
+There are two ways we can reach the limit of recursion:
+1. Run out of all theme words.
+2. Run out of positions to fit any themed word. E.g if there are only 2 positions on the grid of
+   length 4 but we have 3 or more 4 letter themed words.
+3. Some combination of the above. E.g. there are only 4 letter theme words left, but only 5
+   letter positions available.
