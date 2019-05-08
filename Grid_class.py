@@ -1,10 +1,12 @@
 import numpy as np
 import re
 
+from random import choice, sample
+
 class Puzzle():
-    def __init__(self, raw, dic):
+    def __init__(self, raw, full_dic):
         self.raw = raw
-        self.dic = dic #  Large dictionary
+        self.full_dic = full_dic #  For arc consistency and grid completion
         self.size = int(np.sqrt(len(raw)))
         self.divider = '#' #  Represents dark squares on the grid
         assert np.isclose(np.sqrt(len(raw)), self.size) #  Check grid is square
@@ -13,6 +15,7 @@ class Puzzle():
         self.unfilled = self.positions[:]
         self.number_positions()
         self.get_crossers()
+
 
     def get_positions(self):
         '''
@@ -34,7 +37,7 @@ class Puzzle():
             if across:
                 for index, length in across:
                     positions.append(Position(self, i, index, length, 'a'))
-            down = parse_string(''.join(self.grid[:,i]))
+            down = parse_string(''.join(self.grid[:, i])) # column i
             if down:
                 for index, length in down:
                     positions.append(Position(self, index, i, length, 'd'))
@@ -57,8 +60,8 @@ class Puzzle():
 
     def get_crossers(self):
         '''
-        Add any locations of crossings to the dictionary of crossers
-        in each Position class in self.positions.
+        Add any locations of crossings to the list of crossers
+        in each Position in self.positions.
         '''
         for across in [p for p in self.positions if p.direction == 'a']:
             for down in [p for p in self.positions if p.direction == 'd']:
@@ -67,25 +70,103 @@ class Puzzle():
                     across.crossers.append(down)
                     down.crossers.append(across)
 
-    def enter_word(self, word, position):
+    def enter_word(self, position, word):
         assert len(word) == position.length, 'Word does not fit'
         word = np.array(list(word))
         self.grid[position.slice] = word
+        position.pattern = self.get_pattern(position) #  update pattern
         position.filled = True
         if position in self.unfilled: #  In case we are overwriting a word
             self.unfilled.remove(position)
 
-    def remove_word(self, regex, position):
-        assert len(regex.pattern) == position.length, 'Removal too long'
+    def remove_word(self, position, regex):
+        assert len(regex.pattern) == position.length, 'Removal wrong size'
         blanks = np.array([c if c.isalpha() else ' ' for c in regex.pattern])
         self.grid[position.slice] = blanks
+        position.pattern = self.get_pattern(position) #  update pattern
         position.filled = False
         if position not in self.unfilled: #  If accidentally removed twice
             self.unfilled.append(position) #  Don't want multiple entries
 
+    def get_pattern(self, position):
+        '''Return a compiled regex for the position'''
+        return re.compile(''.join([c if c.isalpha() else '.'
+                                   for c in self.grid[position.slice]]))
+
+    def get_possible_words(self, position, pattern=None, dic=None):
+        '''
+        Return a list of possible words which fit position. If checking
+        the crossers of a temporary word, the positions pattern will not
+        be up to date, hence a pattern is passed in.
+        '''
+        if pattern is None:
+            pattern = position.pattern
+        if dic is None:
+            dic = self.full_dic
+        return [word for word in dic[position.length] if
+                re.match(pattern, word)]
+
+    def get_propagation_score(self, position, word):
+        '''
+        If any given word is entered into position, how many possible
+        options for the crossing words does it leave, summed over all of
+        the crossers
+        '''
+        if all([pos.filled for pos in position.crossers]):
+            return 1 #  Does not affect the future grid options
+        old_pattern = position.pattern #  For removing word afterwards
+        self.enter_word(position, word)
+        total = 0
+        for pos in position.crossers:
+            score = len(self.get_possible_words(pos,
+                                                self.get_pattern(pos),
+                                                self.full_dic))
+            if score == 0:
+                total = 0 #  This word means the grid cannot be completed
+                break
+            total += score
+        self.remove_word(position, old_pattern)
+        return total
+
+    def rank_possible_words(self, position):
+        '''
+        Rank all of the possible words which fit by their propagation score.
+        This method has a LOT of scope for optimisation, current version
+        is about as poorly optimised as it gets
+        '''
+        if position.freedom > 1000: #  arbitrary big number
+            print("This will take a while...")
+        scores = [self.get_propagation_score(position, word)
+                  for word in position.possibles]
+        return scores #  These will be in the same order as pos.possibles
+
+    def update_position(self, position):
+        '''
+        Recalculate the possible words which match a position and update
+        the pattern, list of words and freedom of the position. Rank the
+        possible words by highest propagation score, while keeping the
+        score for reference.
+        '''
+        print("Updating Position")
+        position.pattern = self.get_pattern(position)
+        if all([c.isalpha() for c in position.pattern.pattern]):
+            position.filled = True
+            return
+        print("Getting possibles")
+        position.possibles = self.get_possible_words(position)
+        print("Got possibles, ", len(position.possibles), " of them")
+
+        print("Getting scores")
+        position.scores = self.rank_possible_words(position)
+        temp_zip = sorted(zip(position.scores, position.possibles),
+                          key = lambda x: x[0], reverse = True)
+        position.scores, position.possibles = zip(*temp_zip)
+        position.freedom = len(self.possibles)
+
     def latex_print(self):
+        '''In LaTeX mark up for printing'''
         print("\\begin{Puzzle}{15}{15}")
-        number = 1
+        number = 1 #  Position number eg. 1 across
         for i in range(self.size):
             line = ''
             for j in range(self.size):
@@ -119,7 +200,6 @@ class Position():
         self.number = None #  Clue number for printing the grid
         self.get_cell_coords()
         self.cells = [] #  For storing the cells in the GUI
-        self.update() #  Initialise other values
 
     def get_slice(self):
         '''The slice of numpy array which forms this position'''
@@ -133,25 +213,6 @@ class Position():
         coord_grid = np.array([[(i,j) for j in range(self.puzzle.size)]
                                for i in range(self.puzzle.size)])
         self.coords = [(i,j) for i,j in coord_grid[self.slice]]
-
-    def get_pattern(self):
-        '''Return a regex of the current letters in the position'''
-        return re.compile(''.join([c if c.isalpha() else '.'
-                                   for c in self.puzzle.grid[self.slice]]))
-
-    def get_possible_words(self):
-        '''Return a list of words which fit in this position'''
-        return [word for word in self.puzzle.dic[self.length]
-                if re.match(self.pattern, word)]
-
-    def update(self):
-        self.pattern = self.get_pattern()
-        if all([c.isalpha() for c in self.pattern.pattern]):
-            self.filled = True
-            return
-        self.filled = False #  If a letter has been deleted
-        self.possible_words = self.get_possible_words()
-        self.freedom = len(self.possible_words)
 
     def __repr__(self):
         return str((self.i, self.j, self.length, self.direction))
