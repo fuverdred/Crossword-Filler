@@ -44,4 +44,4 @@ There are two ways we can reach the limit of recursion:
    letter positions available.
    
 GUI
-![GUI_example](fuverdred.github.com/Crossword-Filler/Example.png)
+![GUI_example](https://github.com/fuverdred/Crossword-Filler/blob/master/Example.PNG?raw=true)
