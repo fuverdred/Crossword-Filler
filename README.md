@@ -42,3 +42,6 @@ There are two ways we can reach the limit of recursion:
    length 4 but we have 3 or more 4 letter themed words.
 3. Some combination of the above. E.g. there are only 4 letter theme words left, but only 5
    letter positions available.
+   
+GUI
+![GUI_example](fuverdred.github.com/Crossword-Filler/Example.png)
