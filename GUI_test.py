@@ -23,7 +23,7 @@ class Grid_cell(tk.Frame):
         self.entry_widget = tk.Entry(self, width=2,
                                      textvariable=self.text,
                                      justify='center',
-                                     font = "Helvetica 22 bold")
+                                     font = "Helvetica 16 bold")
         self.text.trace('w', lambda *args: self.callback())
         self.entry_widget.grid(row=1, column=1,
                                rowspan=4, columnspan=4,
@@ -122,20 +122,19 @@ with open('raw_grids.txt', 'r') as f:
     raw_grids = [grid[:-1] for grid in f.readlines()]
 ############################################################################
 
-        
+
 Window = tk.Tk()
 Window.geometry("700x700+50+50") # heightxwidth+x+y
 
 mainPanel = tk.Canvas(Window, width = 200, height = 200) # main screen
 mainPanel.pack()
 
-puzzle = Puzzle(raw_grids[13], dic) #  This is the back end
+puzzle = Puzzle(raw_grids[17], dic) #  This is the back end
 grid = Grid(mainPanel, puzzle)
 
 puzzle.heuristic_theme_filler(theme_dic)
 
 filled = [p for p in puzzle.positions if p.filled]
 for pos in filled:
-    print(''.join(puzzle.grid[pos.slice]))
     for cell in pos.cells:
         cell.entry_widget.insert(0, puzzle.grid[cell.i][cell.j])

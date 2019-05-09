@@ -7,20 +7,6 @@ import numpy as np
 
 from Grid_class import Puzzle
 
-##dic = defaultdict(list)
-##theme_words = defaultdict(list)
-##
-##with open('clean_dictionary.txt', 'r') as f:
-##    for word in f.readlines():
-##        dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
-##
-##with open('themes/chocolate_bars.txt', 'r') as f:
-##    for word in f.readlines():
-##        theme_words[len(word[:-1])].append(word[:-1]) #  remove trailing \n
-##
-##with open('raw_grids.txt', 'r') as f:
-##    puzzles = [Puzzle(grid[:-1]) for grid in f.readlines()]
-
 
 def grid_print(puzzle):
     for row in puzzle.grid:
@@ -153,15 +139,29 @@ def recursive(puzzle, depth = 0):
         puzzle.remove_word(pattern, puzzle.unfilled[0])
     return #  Back track
 
+if __name__ == '__main__':   
+    dic = defaultdict(list)
+    theme_words = defaultdict(list)
 
-##for i in range(3,16):
-##    shuffle(dic[i])
-##
-##poss_grids = []
-##for puzzle in puzzles:
-##    x = theme_fitter(puzzle, deepcopy(theme_words), dic)
-##    print("Score: ", len(puzzle.positions) - len(puzzle.unfilled), '\n'*2)
-##    poss_grids.append((len(puzzle.positions) - len(puzzle.unfilled), x))
+    with open('clean_dictionary.txt', 'r') as f:
+        for word in f.readlines():
+            dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
+
+    with open('themes/chocolate_bars.txt', 'r') as f:
+        for word in f.readlines():
+            theme_words[len(word[:-1])].append(word[:-1]) #  remove trailing \n
+
+    with open('raw_grids.txt', 'r') as f:
+        puzzles = [Puzzle(grid[:-1]) for grid in f.readlines()]
+
+    for i in range(3,16):
+        shuffle(dic[i])
+
+    poss_grids = []
+    for puzzle in puzzles:
+        x = theme_fitter(puzzle, deepcopy(theme_words), dic)
+        print("Score: ", len(puzzle.positions) - len(puzzle.unfilled), '\n'*2)
+        poss_grids.append((len(puzzle.positions) - len(puzzle.unfilled), x))
 
 
 

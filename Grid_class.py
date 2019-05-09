@@ -136,9 +136,17 @@ class Puzzle():
         This method has a LOT of scope for optimisation, current version
         is about as poorly optimised as it gets
         '''
-        scores = [self.get_propagation_score(position, word)
-                  for word in position.possibles]
-        return scores #  These will be in the same order as pos.possibles
+        position.scores = [self.get_propagation_score(position, word)
+                           for word in position.possibles]
+        temp_zip = sorted(zip(position.scores, position.possibles),
+                          key=lambda x: x[0], reverse=True)
+        temp_zip = [(score, possible) for score, possible in temp_zip
+                    if score] #  Remove any words with a score of 0
+        if not temp_zip:
+            position.scores = []
+            position.possibles = []
+        else:
+            position.scores, position.possibles = zip(*temp_zip)
 
     def update_position(self, position):
         '''
@@ -180,7 +188,7 @@ class Puzzle():
 
             if depth > best_count:
                 best_count = depth
-                best_grid = deepcopy(self)
+                best_grid = deepcopy(self.grid)
 
             current_pos = theme_positions[0] #  next position to try
             current_pattern = current_pos.pattern #  need for removing word
@@ -229,7 +237,7 @@ class Puzzle():
         best_count = 0
 
         recursive(theme_positions, theme_dic, remaining_pos)
-        return best_grid
+        self.grid = best_grid
 
     def heuristic_theme_filler(self, theme_dic):
         '''
@@ -243,19 +251,16 @@ class Puzzle():
             if not possibles:
                 return
             position.possibles = possibles
-            scores = self.rank_possible_words(position)
-            if not any(scores):
+            self.rank_possible_words(position)
+            if not position.possibles:
                 return
-            position.possibles, _ = zip(*sorted(zip(possibles, scores),
-                                                key=lambda x: x[1],
-                                                reverse=True))
             return position.possibles[0]
             
             
         def weak_recursive(position, depth=0):
             '''Weak because there is minimal backtracking'''
             depth += 1
-            print(' '*depth, depth)
+            #print(' '*depth, depth)
 
             for pos in position.crossers:
                 # Best word leaves the most freedom in the grid
