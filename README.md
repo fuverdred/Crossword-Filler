@@ -12,7 +12,7 @@ of theme words.
 - **Position** : This is a location on the grid where a whole word can go. Recorded in the form
   (i, j, length, direction), where i and j are row and column.
 - **Crosser** : Any position which intersects with another position.
--**Arc Consistency** : The grid is arc consistent if no position is blocked. Any word which leads
+- **Arc Consistency** : The grid is arc consistent if no position is blocked. Any word which leads
   to a blocked position is not arc consistent and needs to be removed. Along side this is the idea
   of a propagation score for a word. The most basic way to calculate this is to count the number
   of possible crossers for the word if it were entered into a position.
