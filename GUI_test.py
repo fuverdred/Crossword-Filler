@@ -23,7 +23,11 @@ class Grid_cell(tk.Frame):
         self.entry_widget = tk.Entry(self, width=2,
                                      textvariable=self.text,
                                      justify='center',
+                                     relief='ridge',
                                      font = "Helvetica 22 bold")
+        self.entry_widget.bind('<Button-1>',
+            lambda x: self.puzzle.GUI.highlight_position(self, self.positions[0]))
+        self.entry_widget.bind('<Right>', )
         self.text.trace('w', lambda *args: self.callback())
         self.entry_widget.grid(row=1, column=1,
                                rowspan=4, columnspan=4,
@@ -43,13 +47,15 @@ class Grid_cell(tk.Frame):
                 self.text.set(self.text.get()[-1].upper())
 
         self.puzzle.grid[self.i][self.j] = self.text.get() #  update back end
+        try:
+            position = self.master.master.current_position
+            next_cell = position.cells[position.cells.index(self) + 1]
+            self.master.master.highlight_position(next_cell,
+                                                  position)
+            next_cell.entry_widget.focus_set()
+        except IndexError:
+            pass
 
-        for pos in self.positions: #  Update the colours on the grid
-            self.puzzle.update_position(pos)
-            colour = self.colour(pos)
-
-            for cell in pos.cells:
-                cell.entry_widget.config(bg = colour)
             
 
     def enter_letter(self, letter):
@@ -77,6 +83,8 @@ class Grid(tk.Frame):
         self.master = master
         self.puzzle = puzzle #  Link to the puzzle back end
         self.pack()
+        self.current_position = None
+        self.current_cell = None
 
         self.grid_canvas = tk.Frame(self, width=100, height=100,
                                     bg='black') #  black background 
@@ -88,22 +96,64 @@ class Grid(tk.Frame):
         for i, row in enumerate(self.puzzle.grid):
             for j, val in enumerate(row):
                 if val != self.puzzle.divider:
-                    self.cells.append(Grid_cell(self.grid_canvas, puzzle, i, j))
-                    self.cells[-1].grid(row=i, column=j, padx=1, pady=1)
+                    cell = Grid_cell(self.grid_canvas, puzzle, i, j)
+                    self.cells.append(cell)
+                    cell.grid(row=i, column=j, padx=1, pady=1)
                     for p in self.puzzle.positions:
                         if (i, j) == (p.i, p.j):
-                            self.cells[-1].set_number(p.number)
+                            cell.set_number(p.number)
                         if (i, j) in p.coords:
                             #  Give cell and positions each others location
-                            p.cells.append(self.cells[-1])
-                            self.cells[-1].positions.append(p)
-
+                            p.cells.append(cell)
+                            cell.positions.append(p)
+    def colour(self, pos):
+        '''Sets the colour of the squares depending on their freedom'''
+        def rgb(r, g, b): #  convert to type which tkinter can handle
+            return "#%s%s%s" % tuple([hex(c)[2:].rjust(2, '0')
+                                      for c in (r, g, b)])
+        if pos.filled:
+            return 'white'
+        elif pos.freedom == 0:
+            return 'gray'
+        freedom = pos.freedom
+        if freedom > 255: #  more than 255 possibles leave fully green
+            freedom = 255
+        g = freedom*2 if freedom < 128 else 255
+        r = 255 if freedom < 128 else 255 - (freedom - 128)*2
+        return rgb(r, g, 0) #  colour the square should now be
+    
     def enter_word(self, position, word):
         assert position.length == len(word), "Word does not fit"
         for i, char in enumerate(word):
             position.cells[i].enter_letter(char)
             position.cells[i].config(bg='white')
 
+    def highlight_position(self, cell, position):
+        if (self.current_position is not None and
+            self.current_position is not position):
+            self.unhighlight_position(self.current_position)
+        self.current_position = position
+        self.current_cell = cell
+        for c in position.cells:
+            if c is cell:
+                c.entry_widget.config(bg='lightblue4')
+            else:
+                c.entry_widget.config(bg='lightblue1')
+
+    def unhighlight_position(self, position):
+        self.puzzle.update_position(position)
+        if position.filled:
+            colour = 'white'
+        else:
+            colour = self.colour(position)
+        for cell in position.cells:
+            if any([pos.filled for pos in cell.positions]):
+                cell.entry_widget.config(bg='white')
+            else:
+                cell.entry_widget.config(bg=colour)
+
+    def right_key(self, event):
+        pass
 
 
 #### LOAD GRIDS AND WORDS #################################################
@@ -124,18 +174,19 @@ with open('raw_grids.txt', 'r') as f:
 
         
 Window = tk.Tk()
-Window.geometry("700x700+50+50") # heightxwidth+x+y
+Window.geometry("800x800") # heightxwidth+x+y
 
 mainPanel = tk.Canvas(Window, width = 200, height = 200) # main screen
 mainPanel.pack()
 
 puzzle = Puzzle(raw_grids[13], dic) #  This is the back end
 grid = Grid(mainPanel, puzzle)
+puzzle.GUI = grid
 
-puzzle.heuristic_theme_filler(theme_dic)
-
-filled = [p for p in puzzle.positions if p.filled]
-for pos in filled:
-    print(''.join(puzzle.grid[pos.slice]))
-    for cell in pos.cells:
-        cell.entry_widget.insert(0, puzzle.grid[cell.i][cell.j])
+##puzzle.heuristic_theme_filler(theme_dic)
+##
+##filled = [p for p in puzzle.positions if p.filled]
+##for pos in filled:
+##    print(''.join(puzzle.grid[pos.slice]))
+##    for cell in pos.cells:
+##        cell.entry_widget.insert(0, puzzle.grid[cell.i][cell.j])
