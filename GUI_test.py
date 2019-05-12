@@ -23,11 +23,15 @@ class Grid_cell(tk.Frame):
         self.entry_widget = tk.Entry(self, width=2,
                                      textvariable=self.text,
                                      justify='center',
+<<<<<<< HEAD
                                      relief='ridge',
                                      font = "Helvetica 22 bold")
         self.entry_widget.bind('<Button-1>',
             lambda x: self.puzzle.GUI.highlight_position(self, self.positions[0]))
         self.entry_widget.bind('<Right>', )
+=======
+                                     font = "Helvetica 16 bold")
+>>>>>>> 20439591239f64f7c74d6e51ca6f10de5633a765
         self.text.trace('w', lambda *args: self.callback())
         self.entry_widget.grid(row=1, column=1,
                                rowspan=4, columnspan=4,
@@ -172,14 +176,14 @@ with open('raw_grids.txt', 'r') as f:
     raw_grids = [grid[:-1] for grid in f.readlines()]
 ############################################################################
 
-        
+
 Window = tk.Tk()
 Window.geometry("800x800") # heightxwidth+x+y
 
 mainPanel = tk.Canvas(Window, width = 200, height = 200) # main screen
 mainPanel.pack()
 
-puzzle = Puzzle(raw_grids[13], dic) #  This is the back end
+puzzle = Puzzle(raw_grids[17], dic) #  This is the back end
 grid = Grid(mainPanel, puzzle)
 puzzle.GUI = grid
 
