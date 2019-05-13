@@ -48,13 +48,14 @@ class Puzzle():
     def number_positions(self):
         '''
         Store the clue numbers for each position, following standard
-        crossword numbering rules.
+        crossword numbering rules. This method works because they are already
+        ordered.
         '''
         number = 1
         done = []
         for pos in self.positions:
             if (pos.i, pos.j) in done:
-                pos.number = number
+                pos.number = number - 1
             else:
                 done.append((pos.i, pos.j))
                 pos.number = number
