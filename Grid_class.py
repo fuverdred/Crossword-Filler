@@ -63,15 +63,14 @@ class Puzzle():
 
     def get_crossers(self):
         '''
-        Add any locations of crossings to the list of crossers
-        in each Position in self.positions.
+        Store any crossers and their index in the position
         '''
         for across in [p for p in self.positions if p.direction == 'a']:
             for down in [p for p in self.positions if p.direction == 'd']:
                 if across.j <= down.j < across.j + across.length and\
                    down.i <= across.i < down.i + down.length:
-                    across.crossers.append(down)
-                    down.crossers.append(across)
+                    across.crossers[down] = down.j
+                    down.crossers[across] = across.i
 
     def enter_word(self, position, word):
         assert len(word) == position.length, 'Word does not fit'
@@ -148,6 +147,48 @@ class Puzzle():
             position.possibles = []
         else:
             position.scores, position.possibles = zip(*temp_zip)
+
+    def optimised_rank_possibles(self, position):
+        '''
+        For each possible word in a position calculate the total freedom of
+        the crossers. 'Optimised' as follows:
+        1. At the index of each crosser which is not already filled create a
+        set of all the possible letters from the possible words.
+        2. For each letter at the index of a crosser calculate the freedom
+        of the crosser if that letter is put in place.
+        3. For each possible word, sum the score of the crossers with the given
+        letter at that position.
+
+        Rank the possible words by their scores, largest first.
+        '''
+        def get_word_score(word):
+            score = 0
+            for pos in letters.keys():
+                index = position.crossers[pos]
+                score += scores[pos][word[index]]
+            return score
+            
+        letters = dict()
+        for pos in position.crossers:
+            if pos.filled:
+                continue
+            index = position.crossers[pos] #  Index where crosser intersects
+            letters[pos] = {word[index] for word in position.possibles}
+
+        scores = {pos: dict() for pos in letters.keys()}
+        for pos in scores.keys():
+            pattern = pos.pattern.pattern #  Double cos already re compliled
+            index = pos.crossers[position] #  This is the index in the crosser
+            for char in letters[pos]:
+                # Get regex for the crosser with char in position
+                p = re.compile(pattern[:index] + char + pattern[index+1:])
+                scores[pos][char] = len(self.get_possible_words(pos, pattern=p))
+
+        ranks = [get_word_score(word) for word in position.possibles]
+        temp_zip = sorted(zip(position.possibles, ranks), reverse=True,
+                          key=lambda x: x[1])
+        position.possibles, position.scores = zip(*temp_zip)
+        
 
     def update_position(self, position):
         '''
@@ -327,7 +368,7 @@ class Position():
         self.length = length
         self.direction = direction
         self.get_slice() #  Store positions as a numpy slice for easy access
-        self.crossers = [] #  List of positions which intersect with this one
+        self.crossers = dict() #dict of positions which intersect with this one
         self.filled = False
         self.number = None #  Clue number for printing the grid
         self.get_cell_coords()
