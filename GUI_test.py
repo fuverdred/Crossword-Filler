@@ -26,7 +26,7 @@ class Grid_cell(tk.Frame):
                                      relief='ridge',
                                      font = "Helvetica 22 bold")
         self.entry_widget.bind('<Button-1>',
-            lambda x: self.puzzle.GUI.highlight_position(self, self.positions[0]))
+            lambda x: self.master.toggle_position(self, self.positions[0]))
         self.entry_widget.bind('<Right>', )
         self.text.trace('w', lambda *args: self.callback())
         self.entry_widget.grid(row=1, column=1,
@@ -107,7 +107,7 @@ class Grid(tk.Frame):
         def rgb(r, g, b): #  convert to type which tkinter can handle
             return "#%s%s%s" % tuple([hex(c)[2:].rjust(2, '0')
                                       for c in (r, g, b)])
-        if position.filled:
+        if position.filled or position.pattern.pattern == '.'*position.length:
             return 'white'
         elif position.freedom == 0:
             return 'gray'
@@ -123,6 +123,13 @@ class Grid(tk.Frame):
         for i, char in enumerate(word):
             position.cells[i].enter_letter(char)
             position.cells[i].config(bg='white')
+
+    def toggle_position(self, cell, position):
+        if self.current_cell is cell and len(cell.positions) > 1:
+            index = cell.positions.index(self.current_position)
+            self.highlight_position(cell, cell.positions[index - 1])
+        else:
+            self.highlight_position(cell, position)
 
     def highlight_position(self, cell, position):
         if (self.current_position is not None and
