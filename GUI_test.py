@@ -25,9 +25,15 @@ class Grid_cell(tk.Frame):
                                      justify='center',
                                      relief='ridge',
                                      font = "Helvetica 22 bold")
+        
         self.entry_widget.bind('<Button-1>',
             lambda x: self.master.toggle_position(self, self.positions[0]))
-        self.entry_widget.bind('<Right>', )
+        self.entry_widget.bind('<BackSpace>', self.backspace)
+        self.entry_widget.bind('<Right>', self.right)
+        self.entry_widget.bind('<Left>', self.left)
+        self.entry_widget.bind('<Up>', self.up)
+        self.entry_widget.bind('<Down>', self.down)
+        
         self.text.trace('w', lambda *args: self.callback())
         self.entry_widget.grid(row=1, column=1,
                                rowspan=4, columnspan=4,
@@ -39,7 +45,7 @@ class Grid_cell(tk.Frame):
                           bg='white', font="Helvetica 6")
         self.label.place(relx=0, x=0, y=-1, anchor=tk.NW)
 
-    def callback(self):  
+    def callback(self):
         if len(self.text.get()) > 0: #  upper case alpha chars only
             if not self.text.get()[-1].isalpha():
                 self.text.set('')
@@ -47,16 +53,53 @@ class Grid_cell(tk.Frame):
                 self.text.set(self.text.get()[-1].upper())
 
         self.puzzle.grid[self.i][self.j] = self.text.get() #  update back end
-        try:
-            position = self.master.current_position
-            next_cell = position.cells[position.cells.index(self) + 1]
-            self.master.highlight_position(next_cell,
-                                                  position)
-            next_cell.entry_widget.focus_set()
-        except IndexError:
-            pass
+        #Push focus forwards or back depending on the key press
+        position = self.master.current_position
+        index = position.cells.index(self)
+        if self.text.get().isalpha() and index < position.length-1:
+            self.master.highlight_position(position.cells[index + 1], position)
 
-            
+    def backspace(self, event):
+        position = self.master.current_position
+        index = position.cells.index(self)
+        if index > 0 and self.text.get() == '':
+            self.master.highlight_position(position.cells[index - 1], position)
+
+    def right(self, event): #  arrow key navigation of grid
+        new = self.master.grid_slaves(self.i, self.j + 1) # No need to check boundary
+        if new != []:
+            if self.master.current_position in new[0].positions:
+                self.master.highlight_position(new[0], self.master.current_position)
+            else:
+                self.master.highlight_position(new[0], new[0].positions[0])
+
+    def left(self, event): #  arrow key navigation of grid
+        if self.j == 0: #  prevent leaving the grid
+            return
+        new = self.master.grid_slaves(self.i, self.j - 1)
+        if new != []:
+            if self.master.current_position in new[0].positions:
+                self.master.highlight_position(new[0], self.master.current_position)
+            else:
+                self.master.highlight_position(new[0], new[0].positions[0])
+
+    def up(self, event): #  arrow key navigation of grid
+        if self.i == 0: #  prevent leaving the grid
+            return
+        new = self.master.grid_slaves(self.i - 1, self.j)
+        if new != []:
+            if self.master.current_position in new[0].positions:
+                self.master.highlight_position(new[0], self.master.current_position)
+            else:
+                self.master.highlight_position(new[0], new[0].positions[0])
+
+    def down(self, event): #  arrow key navigation of grid
+        new = self.master.grid_slaves(self.i + 1, self.j)
+        if new != []:
+            if self.master.current_position in new[0].positions:
+                self.master.highlight_position(new[0], self.master.current_position)
+            else:
+                self.master.highlight_position(new[0], new[0].positions[0])
 
     def enter_letter(self, letter):
         self.entry_widget.insert(0, letter)
@@ -137,6 +180,7 @@ class Grid(tk.Frame):
             self.unhighlight_position(self.current_position)
         self.current_position = position
         self.current_cell = cell
+        cell.entry_widget.focus_set()
         for c in position.cells:
             if c is cell:
                 c.entry_widget.config(bg='lightblue4')
@@ -182,7 +226,7 @@ Window.geometry("800x800") # heightxwidth+x+y
 mainPanel = tk.Canvas(Window, width = 200, height = 200) # main screen
 mainPanel.pack()
 
-puzzle = Puzzle(raw_grids[13], dic) #  This is the back end
+puzzle = Puzzle(raw_grids[54], dic) #  This is the back end
 grid = Grid(mainPanel, puzzle)
 grid.pack()
 puzzle.GUI = grid
