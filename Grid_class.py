@@ -69,8 +69,8 @@ class Puzzle():
             for down in [p for p in self.positions if p.direction == 'd']:
                 if across.j <= down.j < across.j + across.length and\
                    down.i <= across.i < down.i + down.length:
-                    across.crossers[down] = down.j
-                    down.crossers[across] = across.i
+                    across.crossers[down] = down.j - across.j #  relative pos
+                    down.crossers[across] = across.i - down.i 
 
     def enter_word(self, position, word):
         assert len(word) == position.length, 'Word does not fit'
@@ -105,6 +105,8 @@ class Puzzle():
             pattern = position.pattern
         if dic is None:
             dic = self.full_dic
+        if pattern.pattern == '.'*position.length: #  Empty position
+            return dic[position.length] #  No need to do any matching
         return [word for word in dic[position.length] if
                 re.match(pattern, word)]
 
@@ -168,7 +170,7 @@ class Puzzle():
                 score += scores[pos][word[index]]
             return score
             
-        letters = dict()
+        letters = dict() #  Get all of the letters at each intersection point
         for pos in position.crossers:
             if pos.filled:
                 continue
@@ -182,7 +184,9 @@ class Puzzle():
             for char in letters[pos]:
                 # Get regex for the crosser with char in position
                 p = re.compile(pattern[:index] + char + pattern[index+1:])
-                scores[pos][char] = len(self.get_possible_words(pos, pattern=p))
+                scores[pos][char] = len(self.get_possible_words(pos,
+                                                pattern=p,
+                                                dic={pos.length: pos.possibles}))
 
         ranks = [get_word_score(word) for word in position.possibles]
         temp_zip = sorted(zip(position.possibles, ranks), reverse=True,
@@ -200,7 +204,8 @@ class Puzzle():
         if all([c.isalpha() for c in position.pattern.pattern]):
             position.filled = True
             return
-        else position.filled = False
+        else:
+            position.filled = False
         position.possibles = self.get_possible_words(position)
         position.freedom = len(position.possibles)
         self.optimised_rank_possibles(position)
