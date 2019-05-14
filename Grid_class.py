@@ -192,21 +192,18 @@ class Puzzle():
 
     def update_position(self, position):
         '''
-        Recalculate the possible words which match a position and update
-        the pattern, list of words and freedom of the position. Rank the
-        possible words by highest propagation score, while keeping the
-        score for reference.
+        1. Update the pattern
+        2. Update the list of possible words + freedom
+        3. Rank the new list of possible words
         '''
         position.pattern = self.get_pattern(position)
         if all([c.isalpha() for c in position.pattern.pattern]):
             position.filled = True
             return
+        else position.filled = False
         position.possibles = self.get_possible_words(position)
-##        position.scores = self.rank_possible_words(position)
-##        temp_zip = sorted(zip(position.scores, position.possibles),
-##                          key=lambda x: x[0], reverse=True)
-##        position.scores, position.possibles = zip(*temp_zip)
         position.freedom = len(position.possibles)
+        self.optimised_rank_possibles(position)
 
     def grid_print(self):
         for row in self.grid:
