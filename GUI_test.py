@@ -27,7 +27,7 @@ class Grid_cell(tk.Frame):
                                      font = "Helvetica 22 bold")
         
         self.entry_widget.bind('<Button-1>',
-            lambda x: self.master.toggle_position(self, self.positions[0]))
+            lambda x: self.master.toggle_position(self))
         self.entry_widget.bind('<BackSpace>', self.backspace)
         self.entry_widget.bind('<Right>', self.right)
         self.entry_widget.bind('<Left>', self.left)
@@ -167,12 +167,12 @@ class Grid(tk.Frame):
             position.cells[i].enter_letter(char)
             position.cells[i].config(bg='white')
 
-    def toggle_position(self, cell, position):
+    def toggle_position(self, cell):
         if self.current_cell is cell and len(cell.positions) > 1:
             index = cell.positions.index(self.current_position)
             self.highlight_position(cell, cell.positions[index - 1])
         else:
-            self.highlight_position(cell, position)
+            self.highlight_position(cell, cell.positions[0])
 
     def highlight_position(self, cell, position):
         if (self.current_position is not None and
@@ -188,11 +188,13 @@ class Grid(tk.Frame):
                 c.entry_widget.config(bg='lightblue1')
 
     def unhighlight_position(self, position):
-        self.puzzle.update_position(position)
-        if position.filled:
-            colour = 'white'
-        else:
-            colour = self.colour(position)
+        if position.pattern != self.puzzle.get_pattern(position):
+            self.puzzle.update_position(position)
+            for pos in position.crossers:
+                if pos.pattern != self.puzzle.get_pattern(pos):
+                    self.puzzle.update_position(pos)
+
+        colour = self.colour(position)
         for cell in position.cells:
             if any([pos.filled for pos in cell.positions]):
                 cell.entry_widget.config(bg='white')
@@ -227,6 +229,8 @@ mainPanel = tk.Canvas(Window, width = 200, height = 200) # main screen
 mainPanel.pack()
 
 puzzle = Puzzle(raw_grids[54], dic) #  This is the back end
+for pos in puzzle.positions:
+    pos.possibles = puzzle.get_possible_words(pos)
 grid = Grid(mainPanel, puzzle)
 grid.pack()
 puzzle.GUI = grid
