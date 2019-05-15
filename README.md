@@ -43,3 +43,7 @@ Instead the grid is colour coded showing the freedom of positions, allowing the 
 positions with the least freedom first, from the range of words which fit the possible position.
 The list of words is ranked by their propagation score, which is also listed alongside, meaning that
 a word can be ranked on its prevalence or interest instead of just score.
+
+
+#### Notes
+[lru cache optimsation](https://docs.python.org/3/library/functools.html#functools.lru_cache)
