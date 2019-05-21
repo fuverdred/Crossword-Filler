@@ -373,7 +373,7 @@ class Position():
         self.crossers = dict() #dict of positions which intersect with this one
         self.filled = False
         self.number = None #  Clue number for printing the grid
-        self.get_cell_coords()
+        self.coords = self.get_cell_coords()
         self.cells = [] #  For storing the cells in the GUI
         self.pattern = re.compile('.'*self.length)
         self.freedom = len(self.puzzle.full_dic[self.length])
@@ -389,7 +389,7 @@ class Position():
         '''A list of grid coords which make up this position'''
         coord_grid = np.array([[(i,j) for j in range(self.puzzle.size)]
                                for i in range(self.puzzle.size)])
-        self.coords = [(i,j) for i,j in coord_grid[self.slice]]
+        return [(i,j) for i,j in coord_grid[self.slice]]
 
     def __repr__(self):
         return str((self.i, self.j, self.length, self.direction))
