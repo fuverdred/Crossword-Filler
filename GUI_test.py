@@ -6,8 +6,8 @@ from random import choice, shuffle
 
 import numpy as np
 
-from Grid_class import Puzzle #  Format which puzzles/positions are stored in
-import sparse_filler as sf #  This contains all of the grid filling tools
+from Puzzle_class import Puzzle #  Format which puzzles/positions are stored in
+#import sparse_filler as sf #  This contains all of the grid filling tools
 
 class Grid_cell(tk.Frame):
     '''Each text tile in the grid is one of these'''
@@ -205,6 +205,7 @@ class Grid(tk.Frame):
         pass
 
 
+
 #### LOAD GRIDS AND WORDS #################################################
 dic = defaultdict(list)
 theme_dic = defaultdict(list)
@@ -225,14 +226,15 @@ with open('raw_grids.txt', 'r') as f:
 Window = tk.Tk()
 Window.geometry("800x800") # heightxwidth+x+y
 
-mainPanel = tk.Canvas(Window, width = 200, height = 200) # main screen
+mainPanel = tk.Canvas(Window) # main screen
 mainPanel.pack()
 
-puzzle = Puzzle(raw_grids[54], dic) #  This is the back end
+puzzle = Puzzle(raw_grids[7], dic) #  This is the back end
 for pos in puzzle.positions:
     pos.possibles = puzzle.get_possible_words(pos)
 grid = Grid(mainPanel, puzzle)
-grid.pack()
+grid.pack(side=tk.RIGHT)
+
 puzzle.GUI = grid
 
 ##puzzle.heuristic_theme_filler(theme_dic)
