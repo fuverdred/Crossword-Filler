@@ -49,8 +49,11 @@ class Application(tk.Frame):
         self.grid = tk.Frame(self, bg='black')
         self.grid.pack()
 
-        self.cells = []
+        self.cells = [] #  Store the Entry widgets
         self.make_grid()
+
+        self.current_position = None # Start with no position highlighted
+        self.current_cell = None #  Start with no cell highlighted
 
     def make_grid(self):
         for pos in self.puzzle.positions:
@@ -66,6 +69,16 @@ class Application(tk.Frame):
                     cell.set_number(pos.number)
                 pos.cells.append(cell) # Link position to cell
                 cell.positions.append(pos) #  link cell to positions it is in
+
+    def highlight_position(self, cell, position):
+        '''
+        Colour in the current position, with the current cell a slightly
+        different shade.
+        '''
+
+    def unhighlight_position(self, position):
+        
+        
                     
 
 #### LOAD GRIDS AND WORDS #################################################
