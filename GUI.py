@@ -25,6 +25,8 @@ class Grid_cell(tk.Entry):
 
         # All of the bindings for entry and navigation:
         self.text.trace('w', lambda *args: self.clean_text())
+        self.bind('<Button-1>',
+                  lambda x: self.master.master.toggle_position(self))
 
     def set_number(self, number):
         self.number = number
@@ -70,14 +72,66 @@ class Application(tk.Frame):
                 pos.cells.append(cell) # Link position to cell
                 cell.positions.append(pos) #  link cell to positions it is in
 
+    def colour(self, position):
+        '''Sets the colour of a position depending on its freedom'''
+        def rgb(r, g, b): #  Convert to colour tkinter can handle
+            return '#%s%s%s' % tuple([hex(c)[2:].rjust(2, '0')
+                                      for c in (r,g,b)])
+        if position.filled or position.pattern.pattern == '.'*position.length:
+            return 'white'
+        elif position.freedom == 0:
+            return 'gray' #  Stupid american spelling
+        freedom = position.freedom if position.freedom < 255 else 255
+        g = freedom * 2 if freedom < 128 else 255
+        r = 255 if freedom < 128 else 255 - (freedom - 128) * 2
+        return rgb(r, g, 0)
+
+    def toggle_position(self, cell):
+        '''
+        If a new position has been clicked highlight that position.
+        If the position is already highlighted and a cell at a crossing has
+        been clicked toggle to the crossing position
+        '''
+        if self.current_cell is cell and len(cell.positions) > 1:
+            index = cell.positions.index(self.current_position)
+            self.highlight_position(cell, cell.positions[index - 1])
+        else:
+            self.highlight_position(cell, cell.positions[0])
+
     def highlight_position(self, cell, position):
         '''
         Colour in the current position, with the current cell a slightly
         different shade.
         '''
+        if (self.current_position is not None and
+            self.current_position is not position):
+            self.unhighlight_position(self.current_position)
+        self.current_position = position #  Update current position
+        self.current_cell = cell
+        cell.focus_set() #  Put the cursor into current cell
+        for c in position.cells:
+            if c is cell:
+                c.config(bg='lightblue4') #  different shade to rest of pos
+            else:
+                c.config(bg='lightblue1')
 
     def unhighlight_position(self, position):
-        
+        '''
+        1. Check if the position has changed, if it has recalculate freedom
+        2. recalculate freedom of crossers if they have changed
+        '''
+        if position.pattern != self.puzzle.get_pattern(position):
+            self.puzzle.update_position(position)
+            for pos in position.crossers:
+                if pos.pattern != self.puzzle.get_pattern(pos):
+                    self.puzzle.update_position(pos)
+
+        colour = self.colour(position)
+        for cell in position.cells:
+            if any([pos.filled for pos in cell.positions]):
+                cell.config(bg='white') #  Filled crossers take precedence
+            else:
+                cell.config(bg=colour)
         
                     
 
