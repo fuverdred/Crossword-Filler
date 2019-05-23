@@ -27,6 +27,11 @@ class Grid_cell(tk.Entry):
         self.text.trace('w', lambda *args: self.clean_text())
         self.bind('<Button-1>',
                   lambda x: self.master.master.toggle_position(self))
+        self.bind('<BackSpace>', self.backspace)
+        self.bind('<Right>', self.right)
+        self.bind('<Left>', self.left)
+        self.bind('<Up>', self.up)
+        self.bind('<Down>', self.down)
 
     def set_number(self, number):
         self.number = number
@@ -35,11 +40,60 @@ class Grid_cell(tk.Entry):
         self.label.place(relx=0, x=0, y=-1, anchor=tk.NW)
 
     def clean_text(self):
+        '''
+        Only allow one alpha character to be entered, convert all input
+        to upper case. Update backend and shift cursor to next cell
+        '''
         if len(self.text.get()) > 0:
             if not self.text.get()[-1].isalpha():
                 self.text.set('')
             else:
                 self.text.set(self.text.get()[-1].upper())
+
+        self.puzzle.grid[self.i][self.j] = self.text.get() # update backend
+        # Push focus to next cell in position
+        position = self.master.master.current_position
+        index = position.cells.index(self)
+        if self.text.get().isalpha() and index < position.length - 1:
+            self.master.master.highlight_position(position.cells[index + 1],
+                                                  position)
+
+    def backspace(self, event):
+        position = self.master.master.current_position
+        index = position.cells.index(self)
+        if index > 0 and self.text.get() == '': #  backspace text first
+            self.master.master.highlight_position(position.cells[index - 1],
+                                                  position)
+        else: #  If the cursor has ended up on the left of text delete anyway
+            self.text.set('')
+
+    def try_cell(self, i, j):
+        '''
+        Check if a cell exists in the grid at (i, j), if it does highlight it
+        '''
+        cell = self.master.grid_slaves(i, j)
+        if cell == []:
+            return  #  Does not exist
+        #Keep the current position highlighted if possible
+        if self.master.master.current_position in cell[0].positions:
+            self.master.master.highlight_position(cell[0],
+                                            self.master.master.current_position)
+        else:
+            self.master.master.highlight_position(cell[0], cell[0].positions[0])
+
+    def right(self, event): #  Arrow key navigation
+        self.try_cell(self.i, self.j + 1)
+
+    def left(self, event): #  Arrow key navigation
+        if self.j != 0: #  Prevent leaving the grid
+            self.try_cell(self.i, self.j - 1)
+
+    def up(self, event): #  Arrow key navigation
+        if self.i != 0: #  Prevent leaving the grid
+            self.try_cell(self.i - 1, self.j)
+
+    def down(self, event): #  Arrow key navigation
+        self.try_cell(self.i + 1, self.j)
 
 
 class Application(tk.Frame):
