@@ -82,7 +82,7 @@ class Grid_cell(tk.Entry):
             self.master.master.highlight_position(cell[0], cell[0].positions[0])
 
     def right(self, event): #  Arrow key navigation
-        self.try_cell(self.i, self.j + 1)
+        self.try_cell(self.i, self.j + 1) #  Can go off grid in +ve direction
 
     def left(self, event): #  Arrow key navigation
         if self.j != 0: #  Prevent leaving the grid
@@ -93,7 +93,7 @@ class Grid_cell(tk.Entry):
             self.try_cell(self.i - 1, self.j)
 
     def down(self, event): #  Arrow key navigation
-        self.try_cell(self.i + 1, self.j)
+        self.try_cell(self.i + 1, self.j) #  Can go off grid in +ve direction
 
 
 class Application(tk.Frame):
@@ -103,7 +103,13 @@ class Application(tk.Frame):
         self.puzzle = puzzle #  Back end
 
         self.grid = tk.Frame(self, bg='black')
-        self.grid.pack()
+        self.grid.pack(side='right')
+
+        self.word_list = tk.Listbox(self)
+        self.word_list.pack(side='left', fill='y')
+        self.word_list.bind('<Double-Button>', lambda _: self.enter_word(
+            self.current_position,
+            self.current_position.possibles[self.word_list.curselection()[0]]))
 
         self.cells = [] #  Store the Entry widgets
         self.make_grid()
@@ -161,6 +167,7 @@ class Application(tk.Frame):
             self.current_position is not position):
             self.unhighlight_position(self.current_position)
         self.current_position = position #  Update current position
+        self.update_word_list(position)
         self.current_cell = cell
         cell.focus_set() #  Put the cursor into current cell
         for c in position.cells:
@@ -186,6 +193,17 @@ class Application(tk.Frame):
                 cell.config(bg='white') #  Filled crossers take precedence
             else:
                 cell.config(bg=colour)
+
+    def update_word_list(self, position):
+        self.word_list.delete(0, 'end')
+        for word in position.possibles:
+            self.word_list.insert('end', word)
+
+    def enter_word(self, position, word):
+        self.highlight_position(position.cells[0], position)
+        assert len(word) == position.length, "Word does not fit"
+        for i, char in enumerate(word):
+            position.cells[i].text.set(char)
         
                     
 
@@ -206,6 +224,8 @@ with open('raw_grids.txt', 'r') as f:
 ############################################################################
 
 puzzle = Puzzle(raw_grids[7], dic) #  This is the back end
+for p in puzzle.positions:
+    p.possibles = puzzle.get_possible_words(p)
 
 root = tk.Tk()
 app = Application(root, puzzle)
