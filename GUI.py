@@ -105,7 +105,7 @@ class Application(tk.Frame):
         self.grid = tk.Frame(self, bg='black')
         self.grid.pack(side='right')
 
-        self.word_list = tk.Listbox(self)
+        self.word_list = tk.Listbox(self, width=21, font = 'Helvetica')
         self.word_list.pack(side='left', fill='y')
         self.word_list.bind('<Double-Button>', lambda _: self.enter_word(
             self.current_position,
