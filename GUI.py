@@ -1,6 +1,7 @@
 from collections import defaultdict
 import tkinter as tk
 from tkinter import ttk
+from copy import deepcopy
 
 
 from Puzzle_class import Puzzle
@@ -215,7 +216,7 @@ with open('clean_dictionary.txt', 'r') as f:
     for word in f.readlines():
         dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
-with open('themes/chocolate_bars.txt', 'r') as f:
+with open('themes/football_team.txt', 'r') as f:
     for word in f.readlines():
         theme_dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
@@ -223,10 +224,14 @@ with open('raw_grids.txt', 'r') as f:
     raw_grids = [grid[:-1] for grid in f.readlines()]
 ############################################################################
 
-puzzle = Puzzle(raw_grids[7], dic) #  This is the back end
-for p in puzzle.positions:
-    p.possibles = puzzle.get_possible_words(p)
+puzzles = [Puzzle(grid, dic) for grid in raw_grids]
 
-root = tk.Tk()
-app = Application(root, puzzle)
-app.pack()
+for i, puzzle in enumerate(puzzles, 1):
+    print(i)
+    theme = deepcopy(theme_dic)
+    puzzle.heuristic_theme_filler(theme)
+
+
+##root = tk.Tk()
+##app = Application(root, puzzle)
+##app.pack()
