@@ -216,7 +216,7 @@ with open('clean_dictionary.txt', 'r') as f:
     for word in f.readlines():
         dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
-with open('themes/football_team.txt', 'r') as f:
+with open('themes/bikes.txt', 'r') as f:
     for word in f.readlines():
         theme_dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
@@ -231,6 +231,7 @@ for i, puzzle in enumerate(puzzles, 1):
     theme = deepcopy(theme_dic)
     puzzle.heuristic_theme_filler(theme)
 
+puzzles.sort(key = lambda x: len(x.positions)-len(x.unfilled), reverse=True)
 
 ##root = tk.Tk()
 ##app = Application(root, puzzle)
