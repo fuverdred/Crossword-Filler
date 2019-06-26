@@ -216,7 +216,7 @@ with open('clean_dictionary.txt', 'r') as f:
     for word in f.readlines():
         dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
-with open('themes/bikes.txt', 'r') as f:
+with open('themes/tube_stations.txt', 'r') as f:
     for word in f.readlines():
         theme_dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
@@ -232,7 +232,23 @@ for i, puzzle in enumerate(puzzles, 1):
     puzzle.heuristic_theme_filler(theme)
 
 puzzles.sort(key = lambda x: len(x.positions)-len(x.unfilled), reverse=True)
+for p in puzzles[:15]:
+    print('{:d}\t{:d}\t{:.3f}'.format(len(p.positions),
+                                len(p.positions)-len(p.unfilled),
+                                (len(p.positions)-len(p.unfilled))/len(p.positions)))
+    
 
-##root = tk.Tk()
-##app = Application(root, puzzle)
-##app.pack()
+def setup_puzzle(puzzle):
+    root = tk.Tk()
+    app = Application(root, puzzle)
+    app.pack()
+
+    for pos in (set(puzzle.positions) - set(puzzle.unfilled)):
+        word = ''.join(puzzle.grid[pos.slice])
+        app.enter_word(pos, word)
+
+    for pos in puzzle.unfilled:
+        pos.possibles = puzzle.get_possible_words(pos)
+    for pos in puzzle.unfilled:
+        puzzle.update_position(pos)
+    return root, app
