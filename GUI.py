@@ -226,7 +226,7 @@ with open('raw_grids.txt', 'r') as f:
 
 puzzles = [Puzzle(grid, dic) for grid in raw_grids]
 
-for i, puzzle in enumerate(puzzles[:1], 1):
+for i, puzzle in enumerate(puzzles, 1):
     print(i)
     theme = deepcopy(theme_dic)
     puzzle.heuristic_theme_filler(theme)
