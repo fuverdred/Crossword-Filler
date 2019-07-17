@@ -226,7 +226,7 @@ with open('raw_grids.txt', 'r') as f:
 
 puzzles = [Puzzle(grid, dic) for grid in raw_grids]
 
-for i, puzzle in enumerate(puzzles, 1):
+for i, puzzle in enumerate(puzzles[:1], 1):
     print(i)
     theme = deepcopy(theme_dic)
     puzzle.heuristic_theme_filler(theme)
@@ -252,3 +252,6 @@ def setup_puzzle(puzzle):
     for pos in puzzle.unfilled:
         puzzle.update_position(pos)
     return root, app
+
+print('Setting up puzzle, takes up to a minute')
+root, app = setup_puzzle(puzzles[0])
