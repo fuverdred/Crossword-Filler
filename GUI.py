@@ -252,3 +252,6 @@ def setup_puzzle(puzzle):
     for pos in puzzle.unfilled:
         puzzle.update_position(pos)
     return root, app
+
+print('Setting up puzzle, takes up to a minute')
+root, app = setup_puzzle(puzzles[0])
