@@ -48,3 +48,4 @@ a word can be ranked on its prevalence or interest instead of just score.
 #### Notes
 [lru cache optimsation](https://docs.python.org/3/library/functools.html#functools.lru_cache)
 [integer programming](https://stmorse.github.io/journal/IP-Crossword-puzzles.html)
+[python wrapper on US style](https://github.com/jsgonsette/Wizium)
