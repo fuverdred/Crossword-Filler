@@ -3,6 +3,9 @@ import tkinter as tk
 from tkinter import ttk
 from copy import deepcopy
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 from Puzzle_class import Puzzle
 
@@ -216,7 +219,7 @@ with open('clean_dictionary.txt', 'r') as f:
     for word in f.readlines():
         dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
-with open('themes/tube_stations.txt', 'r') as f:
+with open('themes/gorillaz.txt', 'r') as f:
     for word in f.readlines():
         theme_dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
@@ -253,5 +256,25 @@ def setup_puzzle(puzzle):
         puzzle.update_position(pos)
     return root, app
 
+def plot_puzzles(puzzles):
+    row = 3
+    column = 3
+    for i in range(row):
+        for j in range(column):
+            x = i * row + j + 1
+            print(x)
+            plt.subplot(row, column, x)
+            plt.xticks([], [])
+            plt.yticks([], [])
+            puz = puzzles[i*row + j]
+            plt.imshow(puz.divider!=puz.grid, cmap='gray')
+            for a in range(puz.size):
+                for b in range(puz.size):
+                    if puz.grid[a][b].isalpha():
+                        plt.text(b, a, puz.grid[a][b], va='center', ha='center')
+    plt.show()
+
 print('Setting up puzzle, takes up to a minute')
-root, app = setup_puzzle(puzzles[0])
+plot_puzzles(puzzles)
+
+#root, app = setup_puzzle(puzzles[0])
