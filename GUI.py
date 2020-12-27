@@ -2,6 +2,7 @@ from collections import defaultdict
 import tkinter as tk
 from tkinter import ttk
 from copy import deepcopy
+from random import shuffle
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -219,9 +220,9 @@ with open('clean_dictionary.txt', 'r') as f:
     for word in f.readlines():
         dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
 
-with open('themes/gorillaz.txt', 'r') as f:
+with open('themes/egg.txt', 'r') as f:
     for word in f.readlines():
-        theme_dic[len(word[:-1])].append(word[:-1]) #  remove trailing \n
+        theme_dic[len(word[:-1])].append(word.strip(' ').strip('\n')) #  remove trailing \n
 
 with open('raw_grids.txt', 'r') as f:
     raw_grids = [grid[:-1] for grid in f.readlines()]
@@ -229,10 +230,16 @@ with open('raw_grids.txt', 'r') as f:
 
 puzzles = [Puzzle(grid, dic) for grid in raw_grids]
 
+##for key in theme_dic.keys():
+##    shuffle(theme_dic[key])
+
 for i, puzzle in enumerate(puzzles, 1):
     print(i)
-    theme = deepcopy(theme_dic)
-    puzzle.heuristic_theme_filler(theme)
+    try:
+        theme = deepcopy(theme_dic)
+        puzzle.heuristic_theme_filler(theme)
+    except:
+        pass
 
 puzzles.sort(key = lambda x: len(x.positions)-len(x.unfilled), reverse=True)
 for p in puzzles[:15]:
