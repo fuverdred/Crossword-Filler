@@ -1,7 +1,7 @@
 # Themed Crossword Maker
 A crossword creator aimed at making themed grids (English style crossword)
 
-From a small list of themed words (<< entire dictionary) fit as many words as possible into a grid, 
+From a small list of themed words (<< entire dictionary) fit as many words as possible into a grid,
 while maintaining arc consistency. Arc consistency means the grid can still be filled with other, non-
 themed words. Bear in mind that there will also be an optimal grid or grids for any given choice
 of theme words.
@@ -22,7 +22,7 @@ of theme words.
    vice versa.
 2. The first position in the list is chosen, and the possible theme words are ranked based on
    how they affect the freedom of the grid, highest freedom first. This word is then entered
-   into the grid and the weak recursive function is called. If there are no arc consistent words, 
+   into the grid and the weak recursive function is called. If there are no arc consistent words,
    move onto the next position.
 3. Weakly recursively search for crossers in the last position entered, if one exists, continue
    the recursion. If multiple exist, the one with the most freedom is chosen, there is no back
@@ -37,7 +37,7 @@ with more back tracking, possibly removing the theme word leading to the least f
 grid cannot be filled. However, the dictionary used is very large, and has many very unconventional
 words which would make for a bad crossword.
 
-![GUI_example](https://github.com/fuverdred/Crossword-Filler/blob/master/Example.PNG?raw=true)
+![GUI_example](assets/images/Example.png)
 
 Instead the grid is colour coded showing the freedom of positions, allowing the setter to fill the
 positions with the least freedom first, from the range of words which fit the possible position.
