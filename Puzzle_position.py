@@ -1,6 +1,6 @@
 class Position():
     '''
-    A position is a space for a word in the grid, eg. 1 across
+    A position is a space for a word in the grid
     '''
     def __init__(self, puzzle, i, j, length, direction):
         self.puzzle = puzzle #  Puzzle() which contains this position
@@ -26,9 +26,10 @@ class Position():
 
     def get_cell_coords(self):
         '''A list of grid coords which make up this position'''
-        coord_grid = np.array([[(i,j) for j in range(self.puzzle.size)]
-                               for i in range(self.puzzle.size)])
-        return [(i,j) for i,j in coord_grid[self.slice]]
+        if self.direction == 'a':
+            return [(self.i, j) for j in range(self.j, self.j+self.length)]
+        else:
+            return [(i, self.j) for i in range(self.i, self.i+self.length)]
 
     def __repr__(self):
         return str((self.i, self.j, self.length, self.direction))
